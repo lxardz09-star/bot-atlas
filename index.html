@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Atlas Curioso</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Literata:opsz,wght@7..72,200..900&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;overflow:hidden;font-family:"Bricolage Grotesque",sans-serif}
+
+  .mundo{position:relative;width:100vw;height:100vh;overflow:hidden;background:#201e38}
+
+  .escenario-gato{
+    position:absolute;inset:0;z-index:1;
+    overflow:hidden;
+    cursor:crosshair;
+  }
+  .escenario-gato iframe{
+    position:absolute;
+    top:-70px;
+    left:-20px;
+    width:calc(100% + 40px);
+    height:calc(100% + 70px);
+    border:0;
+  }
+
+  .carpetas{
+    position:absolute;top:25px;right:218px;z-index:4;
+    display:grid;grid-template-columns:repeat(2,1fr);
+    gap:18px;width:420px;
+    pointer-events:auto;
+  }
+  .carpeta{
+    position:relative;display:flex;flex-direction:column;
+    align-items:center;gap:8px;padding:12px 6px;
+    border-radius:10px;cursor:pointer;transition:background .15s;
+  }
+  .carpeta:hover{background:rgba(255,255,255,.15)}
+  .carpeta .fforma{position:relative;width:80px;height:64px;filter:drop-shadow(0 4px 7px rgba(0,0,0,.35))}
+  .carpeta .ftapa{position:absolute;top:0;left:8%;width:46%;height:24%;background:var(--fd);border-radius:5px 5px 0 0}
+  .carpeta .fcuerpo{position:absolute;top:14%;left:0;width:100%;height:72%;background:var(--fd);border-radius:4px 8px 8px 8px}
+  .carpeta .ffrente{position:absolute;top:28%;left:0;width:100%;height:58%;background:var(--fl);border-radius:6px;display:grid;place-items:center;font-size:28px}
+  .carpeta .flabel{font-size:14px;font-weight:700;text-align:center;line-height:1.15;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);max-width:120px;word-break:break-word}
+  .carpeta .fcolor{position:absolute;top:2px;right:6px;width:18px;height:18px;border-radius:50%;background:var(--fl);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);cursor:pointer}
+  .carpeta .fcolor::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--fd)}
+
+  .paleta{
+    position:absolute;top:22px;right:0;z-index:10;
+    background:#fff;border:1px solid #ccc;border-radius:10px;
+    padding:6px;display:flex;gap:5px;
+    box-shadow:0 8px 20px rgba(0,0,0,.3);
+  }
+  .paleta button{
+    width:18px;height:18px;border-radius:50%;
+    border:2px solid transparent;cursor:pointer;padding:0;
+  }
+  .paleta button:hover{border-color:#333}
+
+  .panel-contenido{
+    position:absolute;inset:0;z-index:10;
+    background:rgba(15,20,25,.88);backdrop-filter:blur(6px);
+    overflow-y:auto;padding:24px clamp(16px,4vw,40px) 120px;display:none;
+  }
+  .panel-contenido.abierto{display:block}
+  .panel-contenido .cerrar{position:sticky;top:0;float:right;background:#fff;color:#12242C;border-radius:999px;padding:8px 16px;font-weight:700;font-size:14px;margin-bottom:10px;border:2px solid #12242C;cursor:pointer;z-index:5}
+  .panel-contenido .cerrar:hover{background:#12242C;color:#fff}
+  .panel-inner{max-width:760px;margin:0 auto}
+  .panel-inner h1,.panel-inner h2{color:#fff}
+  .panel-inner h1{margin-bottom:8px}
+  .panel-inner h2{font-size:1.5rem;margin:0 0 12px}
+  .panel-inner p{font-family:"Literata",serif;font-size:1.05rem;line-height:1.7;color:#e6eef0;margin:0 0 .9em}
+  .panel-inner .sub{color:#9fb2ba;font-size:1rem}
+  .panel-inner .callout{margin:14px 0;padding:14px 18px;border-left:4px solid var(--accent);border-radius:0 10px 10px 0;background:rgba(255,255,255,.08)}
+  .panel-inner .callout p{margin:0 0 .5em}
+  .panel-inner .chip{display:inline-block;border:1.5px solid #fff;background:transparent;color:#fff;border-radius:999px;padding:6px 14px;font-weight:700;font-size:.9rem;margin-top:8px;cursor:pointer}
+  .panel-inner .chip:hover{background:#fff;color:#12242C}
+  .panel-inner .trivia{background:rgba(255,255,255,.1);border-radius:14px;padding:20px}
+  .panel-inner .topcion{display:block;width:100%;text-align:left;border:1.5px solid #9fb2ba;border-radius:10px;padding:12px 16px;font-weight:600;color:#fff;margin-bottom:8px;background:transparent;cursor:pointer}
+  .panel-inner .topcion:hover:not(:disabled){border-color:#fff;background:rgba(255,255,255,.1)}
+  .panel-inner .topcion.correcta{border-color:#5FD3A0;background:rgba(95,211,160,.2)}
+  .panel-inner .topcion.incorrecta{border-color:#FF8AA5;background:rgba(255,138,165,.15)}
+
+  .panel-contenido::-webkit-scrollbar{width:8px}
+  .panel-contenido::-webkit-scrollbar-track{background:rgba(255,255,255,.05)}
+  .panel-contenido::-webkit-scrollbar-thumb{background:rgba(120,180,255,.3);border-radius:4px}
+</style>
+</head>
+<body>
+<div class="mundo">
+
+  <div class="escenario-gato" id="escenario">
+    <iframe src="pixel.html" scrolling="no"></iframe>
+  </div>
+
+  <div class="carpetas" id="carpetas"></div>
+
+  <div class="panel-contenido" id="panel">
+    <div class="panel-inner">
+      <button class="cerrar" id="cerrar">Cerrar</button>
+      <div id="panelBody"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   MATRICES DE DATOS
+   Formato de cada tema: [id, titulo, descripcion]
+   ═══════════════════════════════════════════════════════════ */
+const TEMAS_POR_CATEGORIA = {
+  misterios:[
+    ['mandela', 'El Efecto Mandela', 'La ilusión de la memoria colectiva. Imagina que estás completamente seguro de que el logotipo de una famosa marca de chocolates tiene una tipografía específica, o que un personaje de caricatura viste de cierto color. Lo recuerdas con total claridad, como si lo hubieras visto ayer. Sin embargo, al buscar la imagen real, descubres que estás equivocado. Peor aún: descubres que millones de personas recuerdan exactamente el mismo error que tú. A este fenómeno se le conoce como Efecto Mandela. Su nombre nació cuando la ufóloga Fiona Broome descubrió que miles de personas compartían el recuerdo detallado de que Nelson Mandela había muerto en prisión en los años 80, con transmisiones de televisión y discursos incluidos. En realidad, Mandela fue liberado, gobernó su país y falleció en 2013. La explicación científica detrás de esto no tiene que ver con dimensiones paralelas, sino con el funcionamiento de nuestro cerebro. La memoria humana no es una cámara de video, sino un rompecabezas. Cada vez que recordamos algo, el cerebro reconstruye la escena combinando fragmentos reales con expectativas, lógica y conocimientos generales. Si falta un detalle, el cerebro lo inventa para que tenga sentido. Cuando este relleno encaja con los estereotipos de la sociedad, se propaga de persona a persona, creando un recuerdo falso colectivo perfectamente idéntico.'],
+    ['dejavu', 'Déjà vu', 'Imagina vas caminando por una calle de una ciudad que nunca antes has visitado. Te detienes en una esquina a mirar una cafetería, un auto pasa tocando la bocina y, de repente, te congela una sensación impactante: tú ya estuviste ahí. Sabes exactamente cómo se moverá el camarero a través del cristal y qué sonido hará el viento al doblar la esquina. Es una certeza absoluta, tan real que asusta, pero tu lógica te dice que es físicamente imposible. A esta experiencia se le llama déjà vu, una expresión francesa que significa ya visto. Lejos de ser una prueba de vidas pasadas o un fallo en la simulación de la realidad, es en realidad un pequeño tropiezo en los circuitos eléctricos de tu cerebro. La ciencia explica que esto ocurre principalmente por un problema de archivo. Cuando experimentamos el presente, la información visual y sensorial va directamente a la memoria de corto plazo para ser procesada en el ahora. Sin embargo, a veces ocurre un milimétrico retraso de milisegundos en las neuronas. El cerebro recibe la información con un ligerísimo desfase y, por error, la archiva directamente en la sección de memoria a largo plazo. Cuando te das cuenta de lo que estás viendo, tu mente ya lo ha etiquetado como un recuerdo antiguo, haciéndote sentir que estás viviendo el presente por segunda vez.'],
+    ['paralisis', 'Parálisis del sueño', 'Abres los ojos en mitad de la noche y descubres que estás completamente congelado: no puedes moverte, hablar ni gritar, aunque estás totalmente despierto. Esta experiencia, angustiante pero inofensiva, es la parálisis del sueño. Ocurre debido a un corto circuito entre la mente y los músculos durante la fase de sueño profundo conocida como fase REM (Movimiento Ocular Rápido). En esta etapa, el cerebro desconecta los músculos del cuerpo de forma natural para evitar que actúes físicamente lo que estás soñando y te lastimes. El problema surge cuando te despiertas abruptamente, pero tu cerebro olvida activar el interruptor de los músculos. Tu mente consciente está 100 por ciento despierta y alerta, pero tu cuerpo sigue en el estado de desconexión profunda del sueño REM. Además, como sigues técnicamente bajo las reglas de esa fase, las pesadillas se filtran en el mundo real en forma de intensas alucinaciones visuales y auditivas, creando monstruos o presencias que tu cerebro fabrica para intentar explicar el pánico y la inmovilidad que estás sintiendo.'],
+    ['espectador', 'El efecto espectador', 'El efecto espectador es un fenómeno psicológico social según el cual es menos probable que alguien intervenga en una situación de emergencia si hay más personas presentes. Imagina que caminas por una calle concurrida y alguien se desploma; aunque está a la vista de todos, nadie se detiene a ayudar porque cada uno asume que otro lo hará. Este comportamiento, que a menudo se confunde con crueldad o apatía, se conoce en psicología como efecto espectador y su origen científico se remonta al célebre y trágico caso de Kitty Genovese en 1964. Los investigadores descubrieron que el factor clave para explicar esta inacción no era la falta de empatía, sino el número de testigos presentes. El fenómeno ocurre principalmente por dos procesos mentales automáticos: la difusión de la responsabilidad y la influencia social pluralista. Por un lado, cuanta más gente compone la multitud, más se divide la obligación moral de actuar, haciendo que cada individuo se sienta menos responsable directo del desenlace. Por otro lado, los seres humanos tendemos a mirar cómo reaccionan los demás antes de actuar; si vemos que el resto del grupo se queda inmóvil y tranquilo, nuestro cerebro concluye erróneamente que la situación no es una emergencia real, perpetuando el círculo de inacción colectiva.'],
+    ['pareidolia', 'Pareidolia', 'La pareidolia es un fenómeno psicológico en el que el cerebro interpreta de forma automática un estímulo vago y aleatorio como una forma reconocible, especialmente rostros humanos. Imagina que vas caminando por la calle, miras hacia el cielo y ves la silueta perfecta de un dragón o un conejo dibujada en las nubes. Este comportamiento de nuestra mente no es una alucinación ni un error aleatorio, sino una ventaja evolutiva heredada de nuestros antepasados más antiguos. El fenómeno ocurre porque el cerebro humano es, por encima de todo, una máquina hiperactiva de buscar patrones para garantizar nuestra supervivencia. En la prehistoria, identificar instantáneamente un rostro o una forma animal oculta entre la maleza marcaba la diferencia entre la vida y la muerte; era mucho mejor confundir una roca con un depredador que ignorar a un depredador real pensando que era una roca. Hoy en día, esa misma programación visual hace que sigamos proyectando rostros familiares en objetos inanimados de nuestra vida cotidiana, encontrando caras sonrientes en los enchufes de la pared, siluetas humanas en los automóviles o formas místicas en una rebanada de pan tostado.'],
+  ],
+  naturaleza: [
+    ['bioblu', 'Bioluminiscencia', 'Seres vivos que producen su propia luz. Desde luciérnagas hasta medusas y hongos, la bioluminiscencia es una reacción química que convierte energía en luz visible. Se usa para atraer presas, defenderse o comunicarse en la oscuridad del océano.'],
+    ['carnivoras', 'Plantas carnívoras', 'Vegetales que cazan insectos. La Venus atrapamoscas, la drosera y la nephentes han desarrollado trampas mortales para obtener los nutrientes que no encuentran en el suelo. Algunas huelen a carne podrida para atraer moscas.'],
+    ['mimetismo', 'Mimetismo animal', 'Animales que imitan a otros. El pulpo mimo imita más de 15 especies distintas. Algunas mariposas copian los colores de otras venenosas para no ser comidas. Es un truco de supervivencia perfeccionado por millones de años.'],
+    ['migracion', 'Migraciones increíbles', 'Viajes que desafían la lógica. El charrán ártico recorre 70.000 km al año entre los polos. Las mariposas monarca viajan 4.000 km desde Canadá hasta México sin haber estado nunca antes ahí. ¿Cómo se orientan? Usan el sol, las estrellas y el campo magnético terrestre.'],
+    ['extremofilos', 'Extremófilos', 'Vida en condiciones imposibles. Hay bacterias que viven en volcanes a 120 grados, otras en hielo antártico, otras en ácido puro o en reactores nucleares. Su existencia sugiere que la vida podría existir en otros planetas en condiciones extremas.'],
+    ['hongo', 'El hongo más grande del mundo', 'Un ser vivo de 9 km². En Oregón (EE.UU.) vive un hongo Armillaria ostoyae que cubre casi 1.000 hectáreas y tiene más de 2.500 años. Es el organismo más grande conocido del planeta. La mayor parte está bajo tierra, invisible.'],
+  ],
+  crimen: [
+    ['tamamb', 'El caso Tamám Shud', 'Un cadáver sin identidad. En 1948, un hombre bien vestido apareció muerto en una playa de Australia. En su bolsillo había un papel con la frase Tamám Shud (terminado en persa). El resto del papel fue encontrado en un libro de poesía con un código indescifrable que nunca se ha podido resolver.'],
+    ['zodiaco', 'El Asesino del Zodíaco', 'Mensajes cifrados nunca resueltos. Entre 1968 y 1969 mató a varias personas en California y envió cartas cifradas a los periódicos. Algunos códigos fueron descifrados, pero la identidad del asesino sigue siendo un misterio. Se cree que aún hay mensajes sin descifrar.'],
+    ['dyatlov', 'El incidente del paso Dyatlov', '9 excursionistas muertos sin explicación. En 1959, nueve montañistas rusos aparecieron muertos en circunstancias extrañas: algunos sin ropa, otros con heridas internas, y la tienda cortada desde adentro. Décadas después, la causa sigue siendo un enigma.'],
+    ['jack', 'Jack el Destripador', 'El asesino más famoso sin rostro. En 1888, un asesino en serie aterrorizó el barrio londinense de Whitechapel. Nunca fue identificado, y las cartas que envió a la policía (algunas posiblemente falsas) dieron origen a uno de los mayores misterios criminales de la historia.'],
+    ['dbcooper', 'El misterio de D.B. Cooper', 'Secuestró un avión y desapareció. En 1971, un hombre llamado Dan Cooper secuestró un vuelo en EE.UU., recibió 200.000 dólares en rescate y saltó en paracaídas sobre el bosque. Nunca fue encontrado. El caso sigue abierto y es el único secuestro aéreo no resuelto de la historia.'],
+  ],
+  supervivencia: [
+    ['regla3', 'La regla del 3', '3 minutos sin aire, 3 días sin agua, 3 semanas sin comida. Es una guía simple pero poderosa para priorizar en una emergencia. Conocerla puede salvar tu vida: si te perdés, primero buscá aire, luego agua, y solo después comida.'],
+    ['naufrago', 'Naufragio y supervivencia', 'Días a la deriva. En 1982, Steven Callahan sobrevivió 76 días en un bote inflable en el Atlántico comiendo pescado crudo y bebiendo agua de lluvia. Su historia inspiró la película Náufrago. La clave: nunca rendirse y adaptarse.'],
+    ['selva', 'Supervivencia en la selva', 'Cómo sobrevivir en la jungla. Reglas básicas: hacer refugio elevado, no comer plantas desconocidas, seguir ríos hacia abajo (suelen llevar a poblados), encender fuego con yesca seca, y evitar tocar animales desconocidos. El mayor peligro no son los jaguares, sino la deshidratación y las infecciones.'],
+    ['desierto', 'Supervivencia en el desierto', 'El calor extremo. En el desierto, la prioridad es la sombra: caminar solo al amanecer y al atardecer. El agua se raciona, no se guarda. Se puede sobrevivir hasta 3 días sin beber. Señales de rescate: hacer tres fuegos en línea, o dibujar una X gigante en el suelo.'],
+    ['frio', 'Supervivencia al frío extremo', 'La hipotermia es la enemiga. En temperaturas bajo cero, el cuerpo pierde calor 25 veces más rápido en agua que en aire. Hay que cubrir cabeza, manos y pies primero. Si alguien entra en hipotermia, no frotar la piel, sino calentar el cuerpo lentamente con mantas y bebidas calientes.'],
+  ],
+};
+
+/* ═══════════════════════════════════════════════════════════
+   MODULOS como matriz:
+   [id, titulo, icono, color, claro, tipo]
+   ═══════════════════════════════════════════════════════════ */
+const MODULOS = [
+  ['misterios',     'Misterios y Psicología', '🧠', '#4B36C8', '#A99BFF', 'temas'],
+  ['naturaleza',    'Naturaleza Curiosa',     '🌿', '#1E7A55', '#5FD3A0', 'temas'],
+  ['crimen',        'Criminología y Enigmas', '🕵️', '#B3203F', '#FF8AA5', 'temas'],
+  ['supervivencia', 'Supervivencia Extrema',  '🧭', '#A85200', '#FFB066', 'temas'],
+  ['trivia',        'Trivia General',         '❓', '#7A3FA0', '#D2B3EC', 'trivia'],
+];
+
+/* ═══════════════════════════════════════════════════════════
+   PALETA como matriz de pares [color, claro]
+   ═══════════════════════════════════════════════════════════ */
+const PALETA = [
+  ['#4B36C8', '#A99BFF'],
+  ['#1E7A55', '#5FD3A0'],
+  ['#B3203F', '#FF8AA5'],
+  ['#A85200', '#FFB066'],
+  ['#2A5DB0', '#9FC0F2'],
+  ['#7A3FA0', '#D2B3EC'],
+  ['#0E7C86', '#7FE0E8'],
+  ['#5B6B73', '#B9C6CC'],
+];
+
+/* ═══════════════════════════════════════════════════════════
+   PERSISTENCIA DE COLORES
+   ═══════════════════════════════════════════════════════════ */
+const CKEY = 'atlas_colores_v3';
+let coloresGuardados = {};
+try { coloresGuardados = JSON.parse(localStorage.getItem(CKEY) || '{}'); } catch(e){}
+
+/* m es el array del módulo: [id, titulo, icono, color, claro, tipo] */
+function colorDe(m){
+  const c = coloresGuardados[m[0]];
+  return c ? { color: c.color, claro: c.claro } : { color: m[3], claro: m[4] };
+}
+function fijarColor(m, color, claro){
+  coloresGuardados[m[0]] = { color, claro };
+  try { localStorage.setItem(CKEY, JSON.stringify(coloresGuardados)); } catch(e){}
+}
+
+const SUBKEY = 'atlas_colores_sub_v1';
+let coloresSub = {};
+try { coloresSub = JSON.parse(localStorage.getItem(SUBKEY) || '{}'); } catch(e){}
+
+function colorSub(id, m){
+  if (coloresSub[id]) return coloresSub[id];
+  return { color: m[3], claro: m[4] };
+}
+function guardarColorSub(id, color, claro){
+  coloresSub[id] = { color, claro };
+  try { localStorage.setItem(SUBKEY, JSON.stringify(coloresSub)); } catch(e){}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CARPETAS PRINCIPALES
+   ═══════════════════════════════════════════════════════════ */
+const carpetasDiv = document.getElementById('carpetas');
+function redibujarCarpetas(){
+  carpetasDiv.innerHTML = '';
+  MODULOS.forEach(m => {
+    const { color, claro } = colorDe(m);
+    const b = document.createElement('div');
+    b.className = 'carpeta';
+    b.style.setProperty('--fd', color);
+    b.style.setProperty('--fl', claro);
+    b.innerHTML = `
+      <div class="fforma">
+        <span class="ftapa"></span><span class="fcuerpo"></span>
+        <span class="ffrente">${m[2]}</span>
+        <span class="fcolor"></span>
+      </div>
+      <span class="flabel">${m[1]}</span>`;
+    b.addEventListener('click', e => {
+      if (e.target.classList.contains('fcolor')) return;
+      abrirModulo(m);
+    });
+    b.querySelector('.fcolor').addEventListener('click', e => {
+      e.stopPropagation();
+      document.querySelectorAll('.paleta').forEach(p => p.remove());
+      const pal = document.createElement('div');
+      pal.className = 'paleta';
+      PALETA.forEach(op => {
+        const sw = document.createElement('button');
+        sw.type = 'button';
+        sw.style.background = op[0];
+        sw.addEventListener('click', ev => {
+          ev.stopPropagation();
+          fijarColor(m, op[0], op[1]);
+          pal.remove();
+          redibujarCarpetas();
+        });
+        pal.appendChild(sw);
+      });
+      b.querySelector('.fforma').appendChild(pal);
+    });
+    carpetasDiv.appendChild(b);
+  });
+}
+redibujarCarpetas();
+
+/* ═══════════════════════════════════════════════════════════
+   PANEL
+   ═══════════════════════════════════════════════════════════ */
+const panel = document.getElementById('panel');
+const panelBody = document.getElementById('panelBody');
+document.getElementById('cerrar').addEventListener('click', () => panel.classList.remove('abierto'));
+
+function abrirModulo(m){
+  panel.classList.add('abierto');
+  document.documentElement.style.setProperty('--accent', colorDe(m).color);
+  panelBody.innerHTML = '';
+  if (m[5] === 'temas') return pintarTemas(m);
+  if (m[5] === 'trivia') return pintarTrivia(m);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TEMAS
+   ═══════════════════════════════════════════════════════════ */
+function pintarTemas(m){
+  panelBody.innerHTML = '';
+  const h = document.createElement('h1');
+  h.textContent = m[2] + ' ' + m[1];
+  panelBody.appendChild(h);
+
+  const p = document.createElement('p');
+  p.className = 'sub';
+  p.textContent = 'Elige un tema para explorar.';
+  panelBody.appendChild(p);
+
+  const grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:18px;margin-top:24px;';
+
+  const temas = TEMAS_POR_CATEGORIA[m[0]] || [];
+
+  temas.forEach(t => {
+    /* t = [id, titulo, descripcion] */
+    const { color, claro } = colorSub(m[0] + '_' + t[0], m);
+    const b = document.createElement('div');
+    b.className = 'carpeta';
+    b.style.setProperty('--fd', color);
+    b.style.setProperty('--fl', claro);
+    b.style.background = 'rgba(255,255,255,.06)';
+    b.style.padding = '14px 10px';
+    b.innerHTML = `
+      <div class="fforma" style="width:80px;height:64px;">
+        <span class="ftapa"></span><span class="fcuerpo"></span>
+        <span class="ffrente" style="font-size:28px;">📄</span>
+        <span class="fcolor"></span>
+      </div>
+      <span class="flabel" style="font-size:13px;max-width:140px;">${t[1]}</span>`;
+
+    b.addEventListener('click', e => {
+      if (e.target.classList.contains('fcolor')) return;
+
+      panelBody.innerHTML = '';
+
+      const btnVolver = document.createElement('button');
+      btnVolver.textContent = '← Volver a ' + m[1];
+      btnVolver.style.cssText = 'background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.4);color:#fff;border-radius:999px;padding:8px 18px;font-weight:700;font-size:.9rem;cursor:pointer;margin-bottom:18px;display:inline-flex;align-items:center;gap:8px;transition:all .15s';
+      btnVolver.addEventListener('mouseenter', () => { btnVolver.style.background = 'rgba(255,255,255,.22)'; });
+      btnVolver.addEventListener('mouseleave', () => { btnVolver.style.background = 'rgba(255,255,255,.1)'; });
+      btnVolver.addEventListener('click', () => { pintarTemas(m); });
+      panelBody.appendChild(btnVolver);
+
+      const hh = document.createElement('h2');
+      hh.textContent = t[1];
+      hh.style.cssText = 'margin-top:0;margin-bottom:14px;font-size:1.6rem';
+      panelBody.appendChild(hh);
+
+      const pp = document.createElement('p');
+      pp.textContent = t[2];
+      pp.style.cssText = 'line-height:1.8;font-size:1.05rem;color:#e6eef0;margin-bottom:18px';
+      panelBody.appendChild(pp);
+
+      const call = document.createElement('div');
+      call.className = 'callout';
+      call.innerHTML = '<p><strong>Para pensar:</strong> ¿Por qué crees que ocurre esto?</p>';
+      panelBody.appendChild(call);
+
+      const $panel = document.getElementById('panel');
+      if ($panel) $panel.scrollTop = 0;
+    });
+
+    b.querySelector('.fcolor').addEventListener('click', e => {
+      e.stopPropagation();
+      document.querySelectorAll('.paleta').forEach(p => p.remove());
+      const pal = document.createElement('div');
+      pal.className = 'paleta';
+      PALETA.forEach(op => {
+        const sw = document.createElement('button');
+        sw.type = 'button';
+        sw.style.background = op[0];
+        sw.addEventListener('click', ev => {
+          ev.stopPropagation();
+          guardarColorSub(m[0] + '_' + t[0], op[0], op[1]);
+          pal.remove();
+          pintarTemas(m);
+        });
+        pal.appendChild(sw);
+      });
+      b.querySelector('.fforma').appendChild(pal);
+    });
+
+    grid.appendChild(b);
+  });
+
+  panelBody.appendChild(grid);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TRIVIA (preguntas en formato matriz)
+   Cada pregunta: [texto, [opciones], indiceCorrecto, explicacion]
+   ═══════════════════════════════════════════════════════════ */
+function pintarTrivia(m){
+  panelBody.innerHTML = '';
+  const h = document.createElement('h1');
+  h.textContent = m[2] + ' ' + m[1];
+  panelBody.appendChild(h);
+
+  const preguntas = [
+    ['¿Qué es el efecto Mandela?',
+      ['Un recuerdo falso compartido','Un sueño lúcido','Una enfermedad','Un ritual'],
+      0,
+      'Es un recuerdo compartido sobre algo que nunca ocurrió.'],
+    ['Durante la parálisis del sueño, ¿qué pasa?',
+      ['Dejas de respirar','La mente despierta pero el cuerpo sigue dormido','Entras en shock','El corazón se detiene'],
+      1,
+      'La mente despierta antes de que termine la parálisis muscular.'],
+    ['¿Qué es Bir Tawil?',
+      ['Una isla prohibida','Un territorio que ningún país reclama','Una ciudad flotante','Un volcán'],
+      1,
+      'Está entre Egipto y Sudán y nadie lo reclama.'],
+    ['¿Por qué las plantas carnívoras cazan?',
+      ['Para respirar','Para obtener nutrientes del suelo','Para defenderse','Para reproducirse'],
+      1,
+      'Viven en suelos pobres en nitrógeno.'],
+    ['¿Para qué sirven las radios de números?',
+      ['Pronóstico','Mensajes cifrados a espías','Publicidad','Navegación'],
+      1,
+      'Se sospecha que transmiten mensajes cifrados.'],
+    ['Según la regla del 3, ¿qué es más urgente?',
+      ['Comida','Agua','Aire','Refugio'],
+      2,
+      'Sin aire resistes solo unos 3 minutos.'],
+  ];
+
+  let i = 0, aciertos = 0, bloqueado = false;
+  const cont = document.createElement('div');
+  cont.className = 'trivia';
+  panelBody.appendChild(cont);
+
+  function pintarPregunta(){
+    bloqueado = false;
+    const preg = preguntas[i];
+    /* preg = [texto, [opciones], indiceCorrecto, explicacion] */
+    cont.innerHTML = `<p class="sub">Pregunta ${i+1} de ${preguntas.length}</p><h2>${preg[0]}</h2>`;
+
+    preg[1].forEach((texto, idx) => {
+      const b = document.createElement('button');
+      b.className = 'topcion';
+      b.type = 'button';
+      b.textContent = texto;
+      b.addEventListener('click', () => {
+        if (bloqueado) return;
+        bloqueado = true;
+        [...cont.querySelectorAll('.topcion')].forEach(c => c.disabled = true);
+        b.classList.add(idx === preg[2] ? 'correcta' : 'incorrecta');
+        if (idx === preg[2]) aciertos++;
+        else cont.querySelectorAll('.topcion')[preg[2]].classList.add('correcta');
+
+        const exp = document.createElement('div');
+        exp.className = 'callout';
+        exp.innerHTML = `<p>${preg[3]}</p>`;
+
+        const sig = document.createElement('button');
+        sig.className = 'chip';
+        sig.type = 'button';
+        sig.textContent = i + 1 < preguntas.length ? 'Siguiente' : 'Ver resultado';
+        sig.addEventListener('click', () => {
+          i++;
+          if (i < preguntas.length) pintarPregunta();
+          else resultado();
+        });
+        exp.appendChild(sig);
+        cont.appendChild(exp);
+      });
+      cont.appendChild(b);
+    });
+  }
+
+  function resultado(){
+    cont.innerHTML = `<h2>Terminaste</h2><p style="font-size:3rem;text-align:center;font-weight:800">${aciertos}/${preguntas.length}</p>`;
+    const otra = document.createElement('button');
+    otra.className = 'chip';
+    otra.type = 'button';
+    otra.textContent = 'Intentar de nuevo';
+    otra.addEventListener('click', () => { i = 0; aciertos = 0; pintarPregunta(); });
+    cont.appendChild(otra);
+  }
+
+  pintarPregunta();
+}
+</script>
+</body>
+</html>
