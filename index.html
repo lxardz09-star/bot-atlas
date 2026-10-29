@@ -2,7 +2,12 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="screen-orientation" content="landscape">
+<meta name="full-screen" content="yes">
+<meta name="x5-orientation" content="landscape">
+<meta name="x5-fullscreen" content="true">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Atlas Curioso</title>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Literata:opsz,wght@7..72,200..900&display=swap" rel="stylesheet">
 <style>
@@ -18,33 +23,40 @@
   }
   .escenario-gato iframe{
     position:absolute;
-    top:-70px;
-    left:-20px;
+    top:-70px; left:-20px;
     width:calc(100% + 40px);
     height:calc(100% + 70px);
     border:0;
   }
-
-  .carpetas{
-    position:absolute;top:25px;right:218px;z-index:4;
-    display:grid;grid-template-columns:repeat(2,1fr);
-    gap:18px;width:420px;
-    pointer-events:auto;
+  @media (max-width: 820px) and (orientation: landscape){
+    .escenario-gato iframe{
+      position:absolute;
+      top:-30px; left:-10px;
+      width:calc(100% + 20px);
+      height:calc(100% + 30px);
+    }
   }
-  .carpeta{
-    position:relative;display:flex;flex-direction:column;
-    align-items:center;gap:8px;padding:12px 6px;
-    border-radius:10px;cursor:pointer;transition:background .15s;
-  }
-  .carpeta:hover{background:rgba(255,255,255,.15)}
-  .carpeta .fforma{position:relative;width:80px;height:64px;filter:drop-shadow(0 4px 7px rgba(0,0,0,.35))}
-  .carpeta .ftapa{position:absolute;top:0;left:8%;width:46%;height:24%;background:var(--fd);border-radius:5px 5px 0 0}
-  .carpeta .fcuerpo{position:absolute;top:14%;left:0;width:100%;height:72%;background:var(--fd);border-radius:4px 8px 8px 8px}
-  .carpeta .ffrente{position:absolute;top:28%;left:0;width:100%;height:58%;background:var(--fl);border-radius:6px;display:grid;place-items:center;font-size:28px}
-  .carpeta .flabel{font-size:14px;font-weight:700;text-align:center;line-height:1.15;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);max-width:120px;word-break:break-word}
-  .carpeta .fcolor{position:absolute;top:2px;right:6px;width:18px;height:18px;border-radius:50%;background:var(--fl);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);cursor:pointer}
-  .carpeta .fcolor::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--fd)}
 
+.carpetas{
+  position:absolute; top:clamp(8px,2vh,25px); right:clamp(8px,2vw,218px); z-index:4;
+  display:grid; grid-template-columns:repeat(2,1fr);
+  gap:clamp(8px,1.5vw,18px);
+  width:clamp(220px,42vw,420px);
+  pointer-events:auto;
+}
+.carpeta{
+  position:relative;display:flex;flex-direction:column;
+  align-items:center;gap:clamp(4px,1vw,8px);padding:clamp(6px,1.2vw,12px) clamp(4px,1vw,6px);
+  border-radius:10px;cursor:pointer;transition:background .15s;
+}
+.carpeta:hover{background:rgba(255,255,255,.15)}
+.carpeta .fforma{position:relative;width:clamp(46px,7vw,80px);height:clamp(38px,6vw,64px);filter:drop-shadow(0 4px 7px rgba(0,0,0,.35))}
+.carpeta .ftapa{position:absolute;top:0;left:8%;width:46%;height:24%;background:var(--fd);border-radius:5px 5px 0 0}
+.carpeta .fcuerpo{position:absolute;top:14%;left:0;width:100%;height:72%;background:var(--fd);border-radius:4px 8px 8px 8px}
+.carpeta .ffrente{position:absolute;top:28%;left:0;width:100%;height:58%;background:var(--fl);border-radius:6px;display:grid;place-items:center;font-size:clamp(16px,2.6vw,28px)}
+.carpeta .flabel{font-size:clamp(10px,1.4vw,14px);font-weight:700;text-align:center;line-height:1.15;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);max-width:clamp(70px,12vw,120px);word-break:break-word}
+.carpeta .fcolor{position:absolute;top:2px;right:6px;width:clamp(12px,2vw,18px);height:clamp(12px,2vw,18px);border-radius:50%;background:var(--fl);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);cursor:pointer}
+.carpeta .fcolor::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--fd)}
   .paleta{
     position:absolute;top:22px;right:0;z-index:10;
     background:#fff;border:1px solid #ccc;border-radius:10px;
@@ -84,6 +96,13 @@
   .panel-contenido::-webkit-scrollbar{width:8px}
   .panel-contenido::-webkit-scrollbar-track{background:rgba(255,255,255,.05)}
   .panel-contenido::-webkit-scrollbar-thumb{background:rgba(120,180,255,.3);border-radius:4px}
+
+  #aviso-rotar{
+    position:fixed;inset:0;z-index:9999;display:none;
+    align-items:center;justify-content:center;
+    background:#201e38;color:#fff;font:700 1.4rem "Bricolage Grotesque",sans-serif;
+    text-align:center;padding:20px;
+  }
 </style>
 </head>
 <body>
@@ -446,6 +465,40 @@ function pintarTrivia(m){
 
   pintarPregunta();
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PANTALLA COMPLETA + ORIENTACIÓN LANDSCAPE EN MÓVIL
+   ═══════════════════════════════════════════════════════════ */
+async function forzarHorizontal(){
+  try{
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen?.();
+    }
+    if (screen.orientation?.lock) {
+      await screen.orientation.lock('landscape').catch(()=>{});
+    }
+  }catch(e){ /* iOS no lo soporta; se queda como está */ }
+}
+
+// En móviles: pantalla completa + landscape al primer toque
+const esMovil = matchMedia('(pointer: coarse)').matches;
+if (esMovil) {
+  document.addEventListener('pointerdown', forzarHorizontal, { once:true });
+}
+
+// Si el teléfono está en vertical, mostrar aviso
+const aviso = document.createElement('div');
+aviso.id = 'aviso-rotar';
+aviso.textContent = '↻ Gira el teléfono';
+document.body.appendChild(aviso);
+
+function chequearOrientacion(){
+  const vertical = innerHeight > innerWidth;
+  aviso.style.display = (esMovil && vertical) ? 'flex' : 'none';
+}
+addEventListener('resize', chequearOrientacion);
+addEventListener('orientationchange', () => setTimeout(chequearOrientacion, 200));
+chequearOrientacion();
 </script>
 </body>
 </html>

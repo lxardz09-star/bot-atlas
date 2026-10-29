@@ -50,7 +50,7 @@ body{
   font-size:15px;line-height:1.55;
   -webkit-font-smoothing:antialiased;
 }
-.wrap{max-width:900px;margin:0 auto;padding:28px 20px 56px}
+.wrap{max-width:min(900px, 100vw);margin:0 auto;padding:clamp(8px,2vh,28px) clamp(8px,2vw,20px) 40px}
 
 header{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 18px;margin-bottom:18px}
 h1{
@@ -123,6 +123,17 @@ kbd{font-family:"Silkscreen",monospace;font-size:10px;border:1px solid var(--lin
 
 @media (prefers-reduced-motion: reduce){
   .sprite{animation-duration:2400ms}
+}
+
+@media (max-width: 820px) and (orientation: landscape){
+  header p{ display:none; }
+  h1{ font-size:clamp(18px, 5vh, 32px); }
+  .stage{ aspect-ratio:16/9; min-height:clamp(120px, 60vh, 400px); }
+  .rail{ grid-template-columns:repeat(auto-fit, minmax(clamp(56px,12vw,104px),1fr)); gap:6px; margin-top:12px; }
+  .sprite{ width:clamp(40px,9vw,64px); height:clamp(40px,9vw,64px); }
+  .dials{ gap:10px 16px; margin-top:12px; padding-top:12px; }
+  input[type=range]{ width:clamp(80px, 22vw, 130px); }
+  footer{ display:none; }
 }
 </style>
 </head>
@@ -364,6 +375,19 @@ function dibujar(){
   }
   ctx.restore();
 }
+// Auto-ajustar escala del gato al ancho del escenario (útil en móvil)
+function ajustarEscalaAuto(){
+  const r = stage.getBoundingClientRect();
+  const escalaAuto = Math.max(2, Math.min(10, Math.round(r.width / 160)));
+  if (escala !== escalaAuto){
+    escala = escalaAuto;
+    escIn.value = escalaAuto;
+    document.getElementById('escalaOut').textContent = escalaAuto + '×';
+    medir();
+  }
+}
+ajustarEscalaAuto();
+addEventListener('resize', ajustarEscalaAuto);
 
 hoja.onload = () => { medir(); requestAnimationFrame(bucle); };
 </script>
